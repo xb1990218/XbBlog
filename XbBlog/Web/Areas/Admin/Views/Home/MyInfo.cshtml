@@ -1,0 +1,143 @@
+﻿@using Entities.Models;
+@{
+    Layout = null;
+    MasterInfo mInfo = ViewBag.mInfo as MasterInfo;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>个人资料</title>
+    <link href="~/lib/layui/css/layui.css" rel="stylesheet" />
+    <script src="~/js/jquery-3.4.0.min.js"></script>
+    <script src="~/lib/layui/layui.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        .layui-field-box {
+            margin: 10px auto;
+            width: 60%;
+        }
+        .imgHeadDiv {
+            text-align: center;
+        }
+        .imgHead {
+            width: 150px;
+            border-radius: 50%;
+        }
+        .uploadImg {
+            text-align: center;
+            margin-top: 5px;
+        }
+    </style>
+    <script type="text/javascript">
+        $(function () {
+            layui.use(['layer', 'form', 'upload'], function () {
+                var layer = layui.layer;
+                var form = layui.form;
+                var upload = layui.upload;
+
+                //执行实例
+                var uploadInst = upload.render({
+                    elem: '#btnUpImg' //绑定元素
+                    , url: '/Admin/Home/UploadImg' //上传接口
+                    , size: 2048
+                    , accept: "images"
+                    , acceptMime: "image/*"
+                    , done: function (res, index, upload) {
+                        //上传完毕回调
+                        if (res.code == 0) {
+                            $("#imgHideUrl").val(res.data.src);
+                            $("#imgHead").attr("src", res.data.src);
+                        } else if (res.code == -1) {
+                            layer.msg(res.msg, { icon: 5 });
+                        }
+                    }
+                    , error: function () {
+                        //请求异常回调
+                    }
+                });
+            });
+        });
+
+        //提交
+        function EditInfo() {
+            //验证各项是否为空
+            //验证是否输入博客名
+            var name = $("#name").val();
+            if (name=="") {
+                layer.tips('请输入博客名', '#name', {
+                    tips: [1, '#FFB800'] //还可配置颜色
+                });
+                $("#name").focus();
+                return;
+            }
+            //验证是否输入个性签名
+            var signame = $("#signame").val();
+            if (signame == "") {
+                layer.tips('请输入个性签名', '#signame', {
+                    tips: [1, '#FFB800'] //还可配置颜色
+                });
+                $("#signame").focus();
+                return;
+            }
+            //验证隐藏域是否有头像地址
+            var headImg = $("#imgHideUrl").val();
+            if (headImg=="") {
+                layer.msg("请选择要上传的头像！", { icon: 5 });
+                return;
+            }
+
+            //发送异步更新
+            $.ajax({
+                url: "/Admin/Home/EditInfo",
+                type: "post",
+                datatype: "json",
+                data: { name: name, signame: signame, headImg:headImg },
+                success: function(data) {
+                    if (data.result==true) {
+                        layer.msg("更新成功！", { icon: 1 });
+                    } else {
+                        layer.msg(data.msg, { icon: 5 });
+                        return;
+                    }
+                }
+            });
+        }
+    </script>
+</head>
+<body>
+    <div class="MainContainer">
+        <fieldset class="layui-elem-field">
+            <legend>个人资料 - 修改</legend>
+            <div class="layui-field-box">
+                <div class="imgHeadDiv"><img class="imgHead" src="@mInfo.HeadImg" id="imgHead"></div>
+                <div class="uploadImg"><button type="button" class="layui-btn" id="btnUpImg">选择头像</button>
+                    <input type="hidden"  value="@mInfo.HeadImg" id="imgHideUrl"/>
+                    </div>
+                <div class="layui-form-item" style="margin: 5px 0;">
+                    <label class="layui-form-label">博客名</label>
+                    <div class="layui-input-block">
+                        <input type="text" id="name" value="@mInfo.Name" placeholder="请输入博客名" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                <label class="layui-form-label">个性签名</label>
+                    <div class="layui-input-block">
+                        <input type="text" id="signame" value="@mInfo.SigName" placeholder="请输入个性签名" class="layui-input">
+                    </div>
+                    <div class="layui-form-item" style="margin-top: 5px;">
+                        <div class="layui-input-block">
+                            <button class="layui-btn" id="btnOk" onclick="EditInfo();">提交</button>
+                        </div>
+                    </div>
+            </div>
+            </div>
+        </fieldset>
+    </div>
+</body>
+</html>

@@ -1,0 +1,110 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>后台登录</title>
+    <!-- Meta tag Keywords -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8" />
+    <meta name="keywords" content="" />
+    <!-- css files -->
+    <link rel="stylesheet" href="/css/styleLogin.css" type="text/css" media="all" />
+    <!-- Style-CSS -->
+    <link rel="stylesheet" href="/css/fontawesome-all.css">
+    <!-- Jquery -->
+    <script src="/js/jquery-3.4.0.min.js"></script>
+    <!-- //Jquery -->
+    <!-- //effect js -->
+    <script src="~/js/md5.js"></script>
+
+    <script type="text/javascript">
+        if (window.parent != this.window) {//如果存在父窗口,则刷新父窗口，否则会出现后台窗口嵌套登录窗口的情况
+            //window.parent.location.href = "/Account/Login"; //这种方式也可以  父窗口跳转到登录
+            parent.location.reload();//刷新 其实也就是跳转到登录了，因为session失效
+        }
+        $(function () {
+            //点击登录
+                $("#btnLogin").on("click", function () {
+                    var username = $("#userName").val();
+                    if (username == "") {
+                        alert("请输入用户名！");
+                        $("#userName").focus();
+                        return;
+                    }
+
+                    var password = $("#password").val();
+                    if (password == "") {
+                        alert("请输入密码！");
+                        $("#password").focus();
+                        return;
+                    }
+                    var md5pass = hex_md5(password);
+                    //发送异步到后台验证
+                    $.ajax({
+                        url: "/Admin/Account/LoginIn",
+                        type: "post",
+                        datatype: "json",
+                        data: { username: username, password: md5pass },
+                        success: function (data) {
+                            if (data.result == true) {
+                                location.replace("/Admin/Home/Index");
+                            }
+                            else {
+                                alert(data.msg);
+                                return;
+                            }
+                        },
+                        error: function (jqXHR) {
+                            alert("网络异常，请重试！");
+                        }
+                    });
+                });
+        });
+    </script>
+</head>
+
+<body>
+    <!-- bg effect -->
+    <div id="bg">
+        <canvas></canvas>
+        <canvas></canvas>
+        <canvas></canvas>
+    </div>
+    <!-- //bg effect -->
+    <!-- title -->
+    <h1>小彪博客后台登录</h1>
+    <!-- //title -->
+    <!-- content -->
+    <div class="sub-main-w3">
+        <form action="#" method="post">
+            <h2>Login Now</h2>
+            <div class="form-style-agile">
+                <label>
+                    用户名：
+                </label>
+                <input placeholder="请输入用户名" name="userName" id="userName" type="text" required="">
+            </div>
+            <div class="form-style-agile">
+                <label>
+                    密 码：
+                </label>
+                <input placeholder="请输入密码" name="password" id="password" type="password" required="">
+            </div>
+            <input type="button" id="btnLogin" value="Log In">
+        </form>
+    </div>
+    <!-- //content -->
+    <!-- copyright -->
+    <div class="footer">
+        <p>Copyright &copy; 2019.SweetLiu All rights reserved.小彪博客</p>
+    </div>
+    <!-- //copyright -->
+</body>
+</html>
+<!-- effect js -->
+<script src="/js/canva_moving_effect.js"></script>
+

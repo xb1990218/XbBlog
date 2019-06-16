@@ -1,0 +1,116 @@
+﻿@using Entities.Models;
+@using Entities.ViewModels;
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "首页-小彪博客";
+    //文章信息
+    List<ArticleIndex> listAce = ViewBag.listAce;
+    //总条数
+    int totalCount = ViewBag.totalCount;
+    //当前页
+    int curr = ViewBag.curr;
+    //类别id
+    int id = ViewBag.id;
+    //搜索关键词
+    string keyTitle = ViewBag.keyTitle;
+
+    //样式的
+    int ci = 0;
+}
+<div id="blog_list">
+    @if (listAce.Count == 0)
+    {
+        <p style="text-align:center;font-size:18px;margin-top:10px;">暂无信息</p>
+    }
+    else
+    {
+        for (int i = 0; i < listAce.Count; i++)
+        {
+            ci = i % 5 + 1;
+            <article class="article article-type-post show is-hiddened" itemscope="" itemprop="blogPost">
+                <div class="article-meta"> <a href="/Home/Detail/@listAce[i].Id" class="article-date"> <span style="color: #aaa;"><i class="layui-icon" style="padding-right: 5px;">&#xe637;</i>@listAce[i].CreateDate.ToString("yyyy-MM-dd HH:mm:ss")</span> </a> </div>
+                <div class="article-inner">
+                    <input type="hidden" class="isFancy">
+                    <header class="article-header">
+                        <h1 itemprop="name"> <a class="article-title" href="/Home/Detail/@listAce[i].Id">@listAce[i].Title</a> </h1>
+                    </header>
+                    <div class="article-entry" itemprop="articleBody">
+                        @listAce[i].Describe 。。。
+                    </div>
+                    <div class="article-info article-info-index">
+                        <div class="article-tag tagcloud">
+                            <ul class="article-tag-list">
+                                <li class="article-tag-list-item"><a class="color@(ci)">@listAce[i].CateName</a></li>
+                            </ul>
+                        </div>
+                        <div class="clearfix"></div>
+                    </div>
+                </div>
+            </article>
+        }
+    }
+</div>
+
+
+<div>
+    <div id="demo7" style="padding-left: 32px;"></div>
+</div>
+
+@section Scripts{
+    <script type="text/javascript">
+    layui.use(['layer', 'laypage'], function () {
+        var layer = layui.layer;
+        var laypage = layui.laypage;
+
+        laypage.render({
+            elem: 'demo7'
+            , count: @totalCount
+            , limit: 12
+            ,curr:@curr
+            , layout: ['count', 'prev', 'page', 'next']
+            , jump: function (obj, first) {
+                //obj包含了当前分页的所有参数，比如：
+                //console.log(obj.curr); //得到当前页，以便向服务端请求对应页的数据。
+                //console.log(obj.limit); //得到每页显示的条数
+                //console.log(first);//这个first页面第一次加载进来时候为true  后面再点第几页时候就为underfine
+
+                //首次不执行
+                if (!first) {
+                    window.location.href = "/Home/Index?id="+@id+"&curr="+obj.curr+"&keyTitle=@keyTitle";
+                }
+            }
+        });
+    });
+
+    //搜索
+    function Search() {
+        var keyTitle = $("#search_key").val();
+        window.location.href = "/Home/Index?keyTitle="+keyTitle;
+    }
+
+    $.when($.ajax({
+        url: 'http://api.map.baidu.com/location/ip?ak=ia6HfFL660Bvh43exmH9LrI6',
+        type: 'POST',
+        dataType: 'jsonp'
+    }), $.ajax({
+        url: 'http://ip-api.com/json',
+        type: 'GET',
+        dataType: 'JSON'
+    })).done(function (data1, data2) {
+        //console.log(data1[0].content.address);
+        //console.log(data2[0].query);
+        var address = data1[0].content.address;
+        var ipAddress = data2[0].query;
+        $.ajax({
+        url: "/Home/WriteVistLog",
+        type: "post",
+        dataType: "json",
+        data: { ip: ipAddress, position: address },
+        success: function (res) {
+
+        }
+    });
+    });
+    </script>
+}
+

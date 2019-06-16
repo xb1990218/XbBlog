@@ -1,0 +1,70 @@
+﻿@using Entities.Models;
+@using Entities.ViewModels;
+@using CommonLib;
+@{
+    ViewData["Title"] = "文章详情-小彪博客";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ArticleIndex art = ViewBag.art;
+
+    //生产单个随机数
+    int num = RandomHelper.createNum();
+    int inum = num % 5;
+}
+
+<article class="article article-type-post show is-hiddened" itemscope="" itemprop="blogPost">
+    <div class="article-meta">
+        <a href="javascript:;" class="article-date">
+            <span style="color: #aaa;"><i class="layui-icon" style="padding-right: 5px;">&#xe637;</i>@art.CreateDate.ToString("yyyy-MM-dd HH:mm:ss")</span>
+        </a>
+    </div>
+    <div class="article-inner">
+        <input type="hidden" class="isFancy">
+        <header class="article-header">
+            <h1 itemprop="name">
+                <a class="article-title" href="javascript:;">@art.Title</a>
+            </h1>
+        </header>
+        <div class="article-entry" itemprop="articleBody">
+            @Html.Raw(art.Body)
+        </div>
+        <div class="article-info article-info-index">
+            <div class="article-tag tagcloud">
+                <ul class="article-tag-list">
+                    <li class="article-tag-list-item">
+                        <a class="color@(inum)" href="javascript:;" style="font-size: 12px;">@art.CateName</a>
+                    </li>
+                </ul>
+            </div>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+</article>
+@section Scripts{
+<script type="text/javascript">
+    //搜索
+    function Search() {
+        var keyTitle = $("#search_key").val();
+        window.location.href = "/Home/Index?keyTitle="+keyTitle;
+    }
+
+    $.when($.ajax({
+        url: 'http://ip-api.com/json',
+        type: 'GET',
+        dataType: 'JSON'
+    })).done(function (data) {
+        //console.log(data);
+        var ipAddress = data.query;
+        $.ajax({
+        url: "/Home/ArcVistNum",
+        type: "post",
+        dataType: "json",
+        data: { id:@art.Id,ip: ipAddress},
+        success: function (res) {
+
+        }
+    });
+    });
+
+</script>
+ }
+

@@ -1,0 +1,145 @@
+﻿@using Entities.Models;
+@{
+    Layout = null;
+    List<Category> listcg = ViewBag.list;
+    Article ace = ViewBag.ace;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>编辑文章</title>
+    <link href="~/lib/layui/css/layui.css" rel="stylesheet" />
+    <script src="~/js/jquery-3.4.0.min.js"></script>
+    <script src="~/lib/layui/layui.js"></script>
+    <script src="~/lib/ueditor-1.4.3.3/ueditor.config.js"></script>
+    <script src="~/lib/ueditor-1.4.3.3/ueditor.all.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        .contain {
+            margin-top: 10px;
+            margin-right: 10px;
+        }
+    </style>
+    <script type="text/javascript">
+        $(function () {
+            layui.use(['form', 'layer'], function () {
+                var form = layui.form;
+                var layer = layui.layer;
+
+
+                //监听提交
+                form.on('submit(btnSum)', function (data) {
+                    console.log(JSON.stringify(data.field));
+                    //发送异步请求去后端保存文章
+                    $.ajax({
+                        url: "/Admin/Home/UpdateWz",
+                        type: "post",
+                        datatype: "json",
+                        data: data.field,
+                        success: function (res) {
+                            if (res.result == true) {
+                                layer.msg("修改成功！", { icon: 1, time: 1000 }, function () {
+                                    $("#mainContent", window.parent.document).attr("src", "/Admin/Home/WzList");
+                                });
+                            }
+                            else {
+                                layer.msg(res.msg, { icon: 5 });
+                                return;
+                            }
+                        }
+                    });
+                    return false;
+                });
+
+                //表单初始赋值
+                form.val('example', {
+                    "title": "@Html.Raw(ace.Title)" // "name": "value"
+                    , "describe": "@Html.Raw(ace.Describe)"
+                    , "id": "@Html.Raw(ace.Id)"
+                });
+            });
+
+            var ue = UE.getEditor('container', {
+                initialFrameHeight: 500,
+                initialFrameWidth: '100%',
+                zIndex: 0
+            });
+        });
+
+    </script>
+</head>
+<body>
+    <div class="contain">
+        <form class="layui-form" action="" lay-filter="example">
+            <div class="layui-form-item">
+                <label class="layui-form-label">标题</label>
+                <div class="layui-input-block">
+                    <input type="hidden" name="id" />
+                    <input type="text" name="title" lay-verify="required" autocomplete="off" placeholder="请输入标题" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">摘要</label>
+                <div class="layui-input-block">
+                    <input type="text" name="describe" lay-verify="required" placeholder="请输入文章简介，字数控制在60内" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">所属分类</label>
+                <div class="layui-input-block">
+                    <select name="categoryId" lay-verify="required" lay-filter="category">
+                        <option value=""></option>
+                        @foreach (var item in listcg)
+                        {
+                            if (item.Id == ace.CategoryId)
+                            {
+                                <option value="@item.Id" selected="">@item.Name</option>
+                            }
+                            else
+                            {
+                                <option value="@item.Id">@item.Name</option>
+                            }
+
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">是否置顶</label>
+                <div class="layui-input-block">
+                    @if (ace.IsTop == 1)
+                    {
+                        <input type="checkbox" checked="" name="isTop" value="1" lay-skin="switch" lay-text="是|否">
+                    }
+                    else
+                    {
+                        <input type="checkbox" name="isTop" value="1" lay-skin="switch" lay-text="是|否">
+                    }
+                </div>
+            </div>
+            <div class="layui-form-item layui-form-text">
+                <label class="layui-form-label">文章内容</label>
+                <div class="layui-input-block">
+
+                    <script id="container" name="container" type="text/plain">
+                        @Html.Raw(ace.Body)
+                    </script>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button class="layui-btn" lay-submit="" lay-filter="btnSum">立即提交</button>
+                    <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

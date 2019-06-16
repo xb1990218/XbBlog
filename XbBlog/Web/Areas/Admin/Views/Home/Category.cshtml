@@ -1,0 +1,134 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>文章分类管理</title>
+    <link href="~/lib/layui/css/layui.css" rel="stylesheet" />
+    <script src="~/js/jquery-3.4.0.min.js"></script>
+    <script src="~/lib/layui/layui.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            layui.use(['table', 'layer'], function () {
+                var table = layui.table;
+                var layer = layui.layer;
+
+                var tableIn = table.render({
+                    elem: "#catb",
+                    url: "/Admin/Home/GetCategoryList",
+                    height: 500,
+                    toolbar: '#toolbarDemo',//头部菜单栏
+                    defaultToolbar: ['print', 'exports'],//自由配置头部工具栏右侧的图标 这里只显示打印和导出
+                    page: true,
+                    limit: 20,
+                    cols: [[
+                        { field: 'id', title: 'ID', hide: true }
+                        , { field: 'xuhao', title: '序号', type: 'numbers', fixed: 'left' }
+                        , { field: 'name', title: '分类名' }
+                        , {
+                            field: 'createDate', title: '创建时间', templet: function (d) {
+                                return layui.util.toDateString(d.createDate, "yyyy-MM-dd HH:mm:ss");
+                            }
+                        }
+                        , { field: 'right', title: '操作', toolbar: '#barDemo', width: 150 }
+                    ]]
+                });
+
+                //监听行工具事件
+                table.on('tool(cafilter)', function (obj) {
+                    var data = obj.data;
+                    //console.log(obj)
+                    if (obj.event === 'del') {
+                        layer.confirm('真的删除行么', function (index) {
+                            layer.close(index);
+                            $.ajax({
+                                url: "/Admin/Home/DelCategory",
+                                type: "post",
+                                datatype: "json",
+                                data: { id: data.id },
+                                success: function (resdata) {
+                                    if (resdata.result == true) {
+                                        $(".layui-laypage-btn")[0].click();//刷新表格 模拟点击当前页的确定按钮
+                                        layer.msg("删除成功！", { icon: 1 });
+                                    } else {
+                                        layer.msg(resdata.msg, { icon: 5 });
+                                        return;
+                                    } 
+                                }
+                            });
+                        });
+                    } else if (obj.event === 'edit') {
+                        layer.prompt({
+                            formType: 3
+                            , value: data.name
+                        }, function (value, index) {
+                                if (data.name==value) {
+                                    layer.msg("未做任何修改", { icon: 3 });
+                                    return
+                                }
+                                $.ajax({
+                                url: "/Admin/Home/EditCategory",
+                                type: "post",
+                                datatype: "json",
+                                data: { id: data.id,name:value },
+                                success: function (resdata) {
+                                    if (resdata.result == true) {
+                                        $(".layui-laypage-btn")[0].click();//刷新表格 模拟点击当前页的确定按钮
+                                        layer.close(index);
+                                        layer.msg("修改成功！", { icon: 1 });
+                                    } else {
+                                        layer.msg(resdata.msg, { icon: 5 });
+                                        return;
+                                    } 
+                                }
+                            });
+                        });
+                    }
+                });
+
+            });
+        });
+
+        //新增分类
+        function Add() {
+            layer.prompt({ title: '请输入新分类名', formType: 3 }, function (text, index) {
+                //layer.msg('演示完毕！您的口令：'+ text);
+                $.ajax({
+                    url: "/Admin/Home/AddCategory",
+                    type: "post",
+                    datatype: "json",
+                    data: { name: text },
+                    success: function (data) {
+                        if (data.result == true) {
+                            layer.close(index);
+                            $(".layui-laypage-btn")[0].click();//刷新表格 模拟点击当前页的确定按钮
+                            layer.msg("添加成功！", { icon: 1 });
+                        } else {
+                            layer.msg(data.msg, { icon: 5 });
+                            return;
+                        }
+                    }
+                });
+            });
+        }
+
+/**/</script>
+</head>
+<body>
+    <table id="catb" lay-filter="cafilter"></table>
+
+</body>
+</html>
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+<script type="text/html" id="toolbarDemo">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" id="btnAdd" onclick="Add();">新增分类</button>
+    </div>
+</script>

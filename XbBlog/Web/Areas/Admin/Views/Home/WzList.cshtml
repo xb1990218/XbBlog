@@ -1,0 +1,134 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>文章列表管理</title>
+    <link href="~/lib/layui/css/layui.css" rel="stylesheet" />
+    <script src="~/js/jquery-3.4.0.min.js"></script>
+    <script src="~/lib/layui/layui.js"></script>
+    <style>
+        .searchDv {
+            padding-top: 5px;
+        }
+
+        .searchInline {
+            width: 25%;
+        }
+    </style>
+    <script type="text/javascript">
+        $(function () {
+            layui.use(['layer', 'table'], function () {
+                var table = layui.table;
+                var layer = layui.layer;
+
+                //实例化表格
+                var wzTable = table.render({
+                    elem: "#tbWzList",
+                    url: "/Admin/Home/GetWzList",
+                    page: true,
+                    limit: 20,
+                    height: 520,
+                    cols: [[
+                        { field: 'id', title: 'ID', hide: true },
+                        { field: 'xuhao', title: '序号', type: 'numbers', fixed: 'left' },
+                        { field: 'title', title: '标题', minWidth: 480 },
+                        {
+                            field: 'createDate', title: '日期', templet: function (d) {
+                                return layui.util.toDateString(d.createDate, "yyyy-MM-dd HH:mm:ss");
+                            }
+                        },
+                        { field: 'category', title: '分类' },
+                        { field: 'isTop', title: '置顶', templet: "#isTop", width: 110 },
+                        {
+                            field: 'vistNum', title: '访问量', templet: function (d) {
+                                if (d.vistNum == 0) {
+                                    return "0";
+                                }
+                                else {
+                                    return d.vistNum;
+                                }
+                            }
+                        },
+                        { field: 'right', title: '操作', toolbar: '#barDemo', width: 150 }
+                    ]]
+                });
+
+                //搜索按钮点击事件
+                $("#btnSearch").on("click", function () {
+                    var titleKey = $("#titleKey").val();
+                    //重载表格
+                    wzTable.reload({
+                        url: "/Admin/Home/GetWzList",
+                        page: {
+                            curr: 1 //重新从第 1 页开始
+                        }
+                        , where: {
+                            titleKey: titleKey
+                        }
+                    });
+                });
+
+                table.on('tool(test)', function (obj) {
+                    var data = obj.data;
+                    //console.log(data);
+                    if (obj.event === 'del') {
+                        layer.confirm('确定要删除吗？', { icon: 7, title: '提示' }, function (index) {
+                            $.ajax({
+                                url: "/Admin/Home/DelWz",
+                                type: "post",
+                                datatype: "json",
+                                data: { id: data.id },
+                                success: function (res) {
+                                    if (res.result == true) {
+                                        layer.msg("删除成功！", { icon: 1, time: 2000 }, function () {
+                                            //刷新表格
+                                            $(".layui-laypage-btn")[0].click();//刷新表格 模拟点击当前页的确定按钮
+                                            layer.close(index);
+                                        });
+                                    } else {
+                                        layer.msg(res.msg, { icon: 5 });
+                                        layer.close(index);
+                                        return;
+                                    }
+                                }
+                            });
+                        });
+                    } else if (obj.event === 'edit') {
+                        $("#mainContent", window.parent.document).attr("src", "/Admin/Home/EditWz?id="+data.id);
+                    }
+                });
+            });
+        });
+
+    </script>
+</head>
+<body>
+    <div class="layui-fluid">
+        <div class="searchDv">
+            <div class="layui-inline searchInline">
+                <input type="text" id="titleKey" autocomplete="off" placeholder="请输入标题关键词" class="layui-input">
+            </div>
+            <button class="layui-btn" id="btnSearch"><i class="layui-icon layui-icon-search"></i></button>
+        </div>
+        <div class="tableDv">
+            <table id="tbWzList" lay-filter="test"></table>
+        </div>
+    </div>
+</body>
+</html>
+<script type="text/html" id="isTop">
+    {{#  if(d.isTop== 1){ }}
+    <input type="checkbox" checked="" lay-skin="switch" lay-text="是|否" disabled>
+    {{#  } else { }}
+    <input type="checkbox" lay-skin="switch" lay-text="是|否" disabled>
+    {{#  } }}
+</script>
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
