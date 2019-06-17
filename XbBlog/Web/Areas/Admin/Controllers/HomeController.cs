@@ -14,6 +14,8 @@ namespace Web.Areas.Admin.Controllers
 {
     public class HomeController : BaseController
     {
+        //访问记录表服务
+        private IVisitLogService vlogSice;
         //公共服务
         private ICommonService comSice;
         //后台登陆用户表服务
@@ -26,8 +28,9 @@ namespace Web.Areas.Admin.Controllers
         private IArticleService aceSice;
         //环境服务
         private IHostingEnvironment env;
-        public HomeController(ICommonService commonService, IArticleService articleService, ICategoryService categoryService, IHostingEnvironment environment, IMasterInfoService masterInfoService, IAdminUserService adminUserService)
+        public HomeController(IVisitLogService visitLogService, ICommonService commonService, IArticleService articleService, ICategoryService categoryService, IHostingEnvironment environment, IMasterInfoService masterInfoService, IAdminUserService adminUserService)
         {
+            vlogSice = visitLogService;
             comSice = commonService;
             aceSice = articleService;
             cgSice = categoryService;
@@ -243,6 +246,17 @@ namespace Web.Areas.Admin.Controllers
                 return Json(new BoolResult { Result = false, Msg = "修改失败！" });
             }
         }
+        //首页访问记录 页面
+        public IActionResult IndexVisLog()
+        {
+            return View();
+        }
+        //获取首页访问记录接口-分页 搜索
+        public JsonResult GetIndexVitLog(int page,int limit,string bedate,string positionKey)
+        {
+            List<VisitLog> list=vlogSice.GetVisitLogsPage(page, limit, bedate, positionKey, out int totalCount);
+            return Json(new { code = 0, msg = "", count = totalCount, data = list });
+        }
         //上传头像
         public JsonResult UploadImg()
         {
@@ -277,7 +291,7 @@ namespace Web.Areas.Admin.Controllers
             var resImageUrl = filePath + newImageName;
             return Json(new { code = 0, msg = "", data =new{src= resImageUrl } });
         }
-
+        //更新信息
         public JsonResult EditInfo(string name,string signame,string headImg)
         {
             MasterInfo m=msInfoSice.GetEntity(a => a.Id == 1);

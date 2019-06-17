@@ -1,0 +1,102 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>首页访问记录</title>
+    <link href="/lib/layui/css/layui.css" rel="stylesheet" />
+    <script src="~/js/jquery-3.4.0.min.js"></script>
+    <script src="/lib/layui/layui.js"></script>
+    <style>
+        .layui-table, .layui-table-view {
+            margin: 2px 0;
+        }
+
+        .toprow {
+            margin-top: 2px;
+        }
+
+        .dateinputdiv {
+            width: 295px;
+        }
+    </style>
+    <script type="text/javascript">
+        $(function () {
+            layui.use(['table','laydate','layer'], function () {
+                var table = layui.table;
+                var laydate = layui.laydate;
+                var layer = layui.layer;
+
+                //日期段
+                laydate.render({
+                    elem: "#searchDate",
+                    type: "datetime",
+                    range:true
+                });
+                //初始化数据表格
+                var infotable=table.render({
+                    elem: '#infoShowTable'
+                    , height: '582'
+                    , url: '/Admin/Home/GetIndexVitLog' //数据接口
+                    , page: true //开启分页
+                    , limit: 20 //每页显示多少条
+                    ,size: 'sm'
+                    , cellMinWidth: 50 //全局定义常规单元格的最小宽度，layui 2.2.1 新增
+                    , cols: [[ //表头
+                        { field: 'id',title: 'ID', sort: true, hide: true }
+                        , { field: 'xuhao',width:90, title: '序号',type:'numbers',fixed:'left' }
+                        , {
+                            field: 'vistTime', title: '日期', width:160, templet: function (d) {
+                                return layui.util.toDateString(d.vistTime, "yyyy-MM-dd HH:mm:ss");
+                            }
+                        }
+                        , { field: 'ip',title: 'IP地址' }
+                        , { field: 'position', title: '省市' }
+                    ]]
+                });
+
+                $("#btnSearch").on("click", function () {
+                    var datetime = $("#searchDate").val();
+                    if (datetime!=""&&datetime.length!=41) {
+                        layer.msg("时间段格式不对，请重新选择", { icon: 2 });
+                        return;
+                    }
+                    var position=$("#positionKey").val();
+                    //表格重载
+                    infotable.reload({
+                        url: "/Admin/Home/GetIndexVitLog",
+                        page: {
+                            curr: 1 //重新从第 1 页开始
+                        }
+                        , where: {
+                            bedate: datetime,
+                            positionKey:position
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="layui-row toprow">
+        <div class="layui-col-md10">
+            <div class="layui-inline">
+                <label class="layui-form-label">起始日期</label>
+                <div class="layui-input-inline dateinputdiv">
+                    <input type="text" class="layui-input" id="searchDate" autocomplete="off" placeholder=" - ">
+                </div>
+            </div>
+            <div class="layui-inline"><input type="text" class="layui-input" id="positionKey" autocomplete="off" placeholder="省市过滤"></div>
+            <button class="layui-btn" id="btnSearch"><i class="layui-icon layui-icon-search"></i></button>
+        </div>
+        <div class="layui-col-md2"></div>
+    </div>
+    <table id="infoShowTable" lay-filter="test"></table>
+</body>
+</html>
