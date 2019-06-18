@@ -32,7 +32,15 @@
                 <div class="article-inner">
                     <input type="hidden" class="isFancy">
                     <header class="article-header">
-                        <h1 itemprop="name"> <a class="article-title" href="/Home/Detail/@listAce[i].Id">@listAce[i].Title</a> </h1>
+                        @if (listAce[i].IsTop == 1)
+                        {
+                            <h1 itemprop="name"><a class="article-title" href="/Home/Detail/@listAce[i].Id"><span style="color:crimson;">【顶】</span>@listAce[i].Title</a> </h1>
+                        }
+                        else
+                        {
+                            <h1 itemprop="name"><a class="article-title" href="/Home/Detail/@listAce[i].Id">@listAce[i].Title</a> </h1>
+                        }
+
                     </header>
                     <div class="article-entry" itemprop="articleBody">
                         @listAce[i].Describe 。。。

@@ -45,7 +45,7 @@
                         { field: 'category', title: '分类' },
                         { field: 'isTop', title: '置顶', templet: "#isTop", width: 110 },
                         {
-                            field: 'vistNum', title: '访问量', templet: function (d) {
+                            field: 'vistNum', title: '访问量', sort: true, templet: function (d) {
                                 if (d.vistNum == 0) {
                                     return "0";
                                 }

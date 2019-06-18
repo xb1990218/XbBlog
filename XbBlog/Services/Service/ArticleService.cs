@@ -60,7 +60,7 @@ namespace Services.Service
                     CateName = ca.Name
                 });
                 TotalCount = queryable.Count();
-                list = queryable.OrderByDescending(a => a.CreateDate).Skip((curr - 1) * limit).Take(limit).ToList();
+                list = queryable.OrderByDescending(a => a.IsTop).ThenByDescending(a => a.CreateDate).Skip((curr - 1) * limit).Take(limit).ToList();
             }
             else
             {
@@ -77,7 +77,7 @@ namespace Services.Service
                     CateName = ca.Name
                 });
                 TotalCount = queryable.Count();
-                list = queryable.OrderByDescending(a => a.CreateDate).Skip((curr - 1) * limit).Take(limit).ToList();
+                list = queryable.OrderByDescending(a => a.IsTop).ThenByDescending(a => a.CreateDate).Skip((curr - 1) * limit).Take(limit).ToList();
             }
             return list;
         } 
