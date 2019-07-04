@@ -5,6 +5,10 @@
     ViewData["Title"] = "文章详情-小彪博客";
     Layout = "~/Views/Shared/_Layout.cshtml";
     ArticleIndex art = ViewBag.art;
+    //该文章的所有评论
+    List<Comment> listCmt = ViewBag.listCmt;
+    //标识是否是管理员登录过。是则开启评论删除功能
+    bool isLogin = ViewBag.isLogin;
 
     //生产单个随机数
     int num = RandomHelper.createNum();
@@ -38,15 +42,94 @@
             <div class="clearfix"></div>
         </div>
     </div>
+
+    <div class="article-commit">
+        <fieldset class="layui-elem-field commit-content">
+            <legend><span class="liuyan">留言:</span></legend>
+            @if (listCmt != null && listCmt.Count > 0)
+            {
+                foreach (Comment item in listCmt)
+                {
+                    <div class="layui-field-box commit-content">
+                        <fieldset class="layui-elem-field">
+                            <legend><span class="commit-time">@item.Name-（@item.ComDate.ToString("yyyy-MM-dd HH:mm")）</span>@if (isLogin)
+                            {<button type="button" onclick="Del(@item.Id);" class="layui-btn layui-btn-xs layui-btn-danger">删除</button>}</legend>
+                            <div class="layui-field-box com-content">
+                                @item.ComText
+                            </div>
+                        </fieldset>
+                    </div>
+                }
+            }
+            else
+            {
+                <p class="shafa">暂无留言，抢占沙发中。。。</p>
+            }
+        </fieldset>
+        <div class="commit-form">
+            <form class="layui-form" action="">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">您名字</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="name" maxlength="15" required lay-verify="required" placeholder="请输入您的名字" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item layui-form-text">
+                    <label class="layui-form-label">您的留言</label>
+                    <div class="layui-input-block">
+                        <textarea name="comText" maxlength="500" required lay-verify="required" placeholder="请输入留言" class="layui-textarea"></textarea>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn" lay-submit lay-filter="formDemo">提交留言</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 </article>
 @section Scripts{
-<script type="text/javascript">
+    <script>
+        //Demo
+        layui.use(['form','layer'], function () {
+            var form = layui.form;
+            var layer = layui.layer;
+
+            //监听提交
+            form.on('submit(formDemo)', function (data) {
+                layer.load(1);//开启loading效果
+                var sname = data.field.name;
+                var scomtext = data.field.comText;
+                var sip = ip;
+                var iartId =@art.Id;
+                $.ajax({
+                    url: "/Home/AddComment",
+                    type: "post",
+                    dataType: "json",
+                    data: { name: sname, comtext: scomtext, ip: sip, artid: iartId },
+                    success: function (res) {
+                        if (res.result) {
+                            window.location.reload();
+                        } else {
+                            layer.msg(res.msg, { icon: 5 });
+                            layer.closeAll('loading');
+                        }
+                    }
+                });
+
+                return false;
+            });
+        });
+    </script>
+    <script type="text/javascript">
     //搜索
     function Search() {
         var keyTitle = $("#search_key").val();
         window.location.href = "/Home/Index?keyTitle="+keyTitle;
     }
-
+    var ip;
     $.when($.ajax({
         url: 'http://ip-api.com/json',
         type: 'GET',
@@ -54,6 +137,7 @@
     })).done(function (data) {
         //console.log(data);
         var ipAddress = data.query;
+        ip = ipAddress;
         $.ajax({
         url: "/Home/ArcVistNum",
         type: "post",
@@ -65,6 +149,56 @@
     });
     });
 
-</script>
- }
+    //删除评论
+    function Del(id) {
+        layer.confirm('确定要删除吗？', { icon: 3, title: '提示' }, function (index) {
+                //发异步到后端
+                $.ajax({
+                    url: "/Home/DelComment",
+                    type: "post",
+                    datatype: "json",
+                    data: {id:id},
+                    success: function (data) {
+                        if (data.result) {
+                            window.location.reload();
+                        }
+                        layer.close(index);
+                    },
+                    error: function () {
+                        layer.close(index);
+                    }
+                });
+            });
+    }
+    </script>
+
+    <style>
+        .liuyan {
+            font-weight: 500;
+        }
+
+        .commit-time {
+            font-size: 2.1vmin;
+        }
+
+        .commit-content {
+            padding-top: 2px;
+            padding-bottom: 2px;
+        }
+
+        .commit-form {
+            padding-right: 15px;
+        }
+
+        .com-content {
+            font-size: 13px;
+        }
+
+        .shafa {
+            text-align: center;
+            font-size: 2.1vmin;
+            color: darkgray;
+        }
+    </style>
+}
 

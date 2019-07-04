@@ -19,6 +19,7 @@ namespace Entities
         public DbSet<AdminUser> AdminUser { get; set; }
         public DbSet<Category> Category { get; set; }
         public DbSet<VisitLog> VisitLog { get; set; }
+        public DbSet<Comment> Comment { get; set; }
         #endregion
     }
 }

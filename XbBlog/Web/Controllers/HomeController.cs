@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Entities.Models;
 using Entities.ViewModels;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using Services.IService;
@@ -13,6 +14,8 @@ namespace Web.Controllers
 {
     public class HomeController : Controller
     {
+        //评论表服务
+        private ICommentService cmtSice;
         //缓存服务
         private IMemoryCache cache;
         //首页访问记录表服务
@@ -24,8 +27,9 @@ namespace Web.Controllers
         //公共服务
         private ICommonService comSice;
 
-        public HomeController(IMemoryCache memoryCache, IVisitLogService visitLogService, IArticleService articleService,ICommonService commonService, IMasterInfoService masterInfoService)
+        public HomeController(ICommentService commentService, IMemoryCache memoryCache, IVisitLogService visitLogService, IArticleService articleService,ICommonService commonService, IMasterInfoService masterInfoService)
         {
+            cmtSice = commentService;
             cache = memoryCache;
             vistSice = visitLogService;
             aceSice = articleService;
@@ -72,6 +76,20 @@ namespace Web.Controllers
             //文章分类和对应博客数量
             List<CateNum> listCate = comSice.GetCateAndNum();
             ViewBag.listCate = listCate;
+
+            //获取该文章的评论
+            List<Comment> listCmt=cmtSice.GetListEntities(a => a.ArtId == id).ToList();
+            ViewBag.listCmt = listCmt;
+
+            //如果session获取到了 表示登录过后台的，启用删除评论功能
+            int? loginid = HttpContext.Session.GetInt32("userId");
+            bool isLogin = false;
+            if (loginid!=null)
+            {
+                isLogin = true;
+            }
+            ViewBag.isLogin = isLogin;
+
             return View(m);
         }
 
@@ -116,6 +134,53 @@ namespace Web.Controllers
                 cache.Set($"ArcVistNumIp_{id}_{ip}", ip, DateTimeOffset.Now.AddMinutes(20));
             }
             return Json(new BoolResult { Result = true });
+        }
+
+        //评论写入数据库，同一ip3分钟内只能评论一次
+        public JsonResult AddComment(string name,string comtext,string ip,int artid)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(ip) ||artid<1)
+                {
+                    return Json(new BoolResult { Result = false, Msg ="评论失败！" });
+                }
+                if (!cache.TryGetValue($"Comment_ip_{ip}", out string cip))//如果缓存里面没有 则写入数据库记录下访问信息
+                {
+                    //写入数据库
+                    Comment cmt = new Comment();
+                    cmt.Name = name;
+                    cmt.ComText = comtext;
+                    cmt.Ip = ip;
+                    cmt.ArtId = artid;
+                    cmt.ComDate = DateTime.Now;
+                    cmtSice.Add(cmt);
+
+                    //写入缓存3分钟，也就是一个ip 3分钟内只允许评论一次
+                    cache.Set($"Comment_ip_{ip}", ip, DateTimeOffset.Now.AddMinutes(3));
+                    return Json(new BoolResult { Result = true });
+                }
+                return Json(new BoolResult { Result = false,Msg="3分钟内只能留言一次哦！" });
+            }
+            catch (Exception ex)
+            {
+
+                return Json(new BoolResult { Result = false,Msg=ex.Message });
+            }
+        }
+        //删除一条评论
+        public JsonResult DelComment(int id)
+        {
+            try
+            {
+                cmtSice.DelByIds(id);
+                return Json(new BoolResult { Result = true });
+            }
+            catch (Exception ex)
+            {
+
+                return Json(new BoolResult { Result = false, Msg = ex.Message });
+            }
         }
     }
 }
