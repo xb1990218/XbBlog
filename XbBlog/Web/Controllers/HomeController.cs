@@ -145,7 +145,7 @@ namespace Web.Controllers
                 {
                     return Json(new BoolResult { Result = false, Msg ="评论失败！" });
                 }
-                if (!cache.TryGetValue($"Comment_ip_{ip}", out string cip))//如果缓存里面没有 则写入数据库记录下访问信息
+                if (!cache.TryGetValue($"Comment_{artid}_{ip}", out string cip))//如果缓存里面没有 则写入数据库记录下访问信息
                 {
                     //写入数据库
                     Comment cmt = new Comment();
@@ -156,11 +156,11 @@ namespace Web.Controllers
                     cmt.ComDate = DateTime.Now;
                     cmtSice.Add(cmt);
 
-                    //写入缓存3分钟，也就是一个ip 3分钟内只允许评论一次
-                    cache.Set($"Comment_ip_{ip}", ip, DateTimeOffset.Now.AddMinutes(3));
+                    //写入缓存3分钟，也就是一个ip 同一文章 3分钟内只允许评论一次
+                    cache.Set($"Comment_{artid}_{ip}", ip, DateTimeOffset.Now.AddMinutes(3));
                     return Json(new BoolResult { Result = true });
                 }
-                return Json(new BoolResult { Result = false,Msg="3分钟内只能留言一次哦！" });
+                return Json(new BoolResult { Result = false,Msg="一篇文章3分钟内只能留言一次哦！" });
             }
             catch (Exception ex)
             {
