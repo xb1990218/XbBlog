@@ -92,7 +92,7 @@ namespace Web.Controllers
 
             //每次进入本页生成一个Guid做为token给前端评论用，评论一次就失效，防止黑客写程序无限调用接口。后端存到session
             string sGuid = Guid.NewGuid().ToString("N");//3a81013f9ee549b38f11ee3d50f5bd78这种格式
-            HttpContext.Session.SetString($"token_{sGuid}", sGuid);
+            cache.Set($"token_{sGuid}", sGuid, DateTimeOffset.Now.AddMinutes(30));//写入缓存30 分钟
             ViewBag.token = sGuid;
 
             return View(m);
@@ -151,12 +151,12 @@ namespace Web.Controllers
                 {
                     return Json(new BoolResult { Result = false, Msg ="评论失败！" });
                 }
-                //判断前端带过来的token 是否存在session
-                if (token!= HttpContext.Session.GetString($"token_{token}"))
+                //判断前端带过来的token 是否存在缓存中
+                if (!cache.TryGetValue($"token_{token}", out string stoken))
                 {
-                    return Json(new BoolResult { Result = false, Msg = "非法调用！" });
+                    return Json(new BoolResult { Result = false, Msg = "超时，请刷新页面再评论！" });
                 }
-                HttpContext.Session.Remove($"token_{token}");//删除session 评论一次就失效 因为每次进入文章详情页会生成一个新的
+                
 
                 //如果缓存里面没有 则写入数据库记录下访问信息
                 if (!cache.TryGetValue($"Comment_{artid}_{ip}", out string cip))
@@ -172,6 +172,8 @@ namespace Web.Controllers
 
                     //写入缓存3分钟，也就是一个ip 同一文章 3分钟内只允许评论一次
                     cache.Set($"Comment_{artid}_{ip}", ip, DateTimeOffset.Now.AddMinutes(3));
+                    //写入评论之后要清空这条token缓存，保证一个token用一次就失效。因为评论完会刷新页面会重新获取一个token
+                    cache.Remove($"token_{token}");
                     return Json(new BoolResult { Result = true });
                 }
                 return Json(new BoolResult { Result = false,Msg="一篇文章3分钟内只能留言一次哦！" });
