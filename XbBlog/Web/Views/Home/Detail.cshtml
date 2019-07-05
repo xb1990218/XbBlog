@@ -108,7 +108,7 @@
                     url: "/Home/AddComment",
                     type: "post",
                     dataType: "json",
-                    data: { name: sname, comtext: scomtext, ip: sip, artid: iartId },
+                    data: { name: sname, comtext: scomtext, ip: sip, artid: iartId,token:"@ViewBag.token" },
                     success: function (res) {
                         if (res.result) {
                             window.location.reload();

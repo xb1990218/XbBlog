@@ -90,6 +90,11 @@ namespace Web.Controllers
             }
             ViewBag.isLogin = isLogin;
 
+            //每次进入本页生成一个Guid做为token给前端评论用，评论一次就失效，防止黑客写程序无限调用接口。后端存到session
+            string sGuid = Guid.NewGuid().ToString("N");//3a81013f9ee549b38f11ee3d50f5bd78这种格式
+            HttpContext.Session.SetString($"token_{sGuid}", sGuid);
+            ViewBag.token = sGuid;
+
             return View(m);
         }
 
@@ -137,7 +142,8 @@ namespace Web.Controllers
         }
 
         //评论写入数据库，同一ip3分钟内只能评论一次
-        public JsonResult AddComment(string name,string comtext,string ip,int artid)
+        [HttpPost]
+        public JsonResult AddComment(string name,string comtext,string ip,int artid,string token)
         {
             try
             {
@@ -145,7 +151,15 @@ namespace Web.Controllers
                 {
                     return Json(new BoolResult { Result = false, Msg ="评论失败！" });
                 }
-                if (!cache.TryGetValue($"Comment_{artid}_{ip}", out string cip))//如果缓存里面没有 则写入数据库记录下访问信息
+                //判断前端带过来的token 是否存在session
+                if (token!= HttpContext.Session.GetString($"token_{token}"))
+                {
+                    return Json(new BoolResult { Result = false, Msg = "非法调用！" });
+                }
+                HttpContext.Session.Remove($"token_{token}");//删除session 评论一次就失效 因为每次进入文章详情页会生成一个新的
+
+                //如果缓存里面没有 则写入数据库记录下访问信息
+                if (!cache.TryGetValue($"Comment_{artid}_{ip}", out string cip))
                 {
                     //写入数据库
                     Comment cmt = new Comment();
