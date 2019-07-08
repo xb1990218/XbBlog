@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using CommonLib;
 using Entities.Models;
 using Entities.ViewModels;
 using Microsoft.AspNetCore.Http;
@@ -174,6 +175,13 @@ namespace Web.Controllers
                     cache.Set($"Comment_{artid}_{ip}", ip, DateTimeOffset.Now.AddMinutes(3));
                     //写入评论之后要清空这条token缓存，保证一个token用一次就失效。因为评论完会刷新页面会重新获取一个token
                     cache.Remove($"token_{token}");
+
+                    //发送邮件
+                    Article ace=aceSice.GetEntity(a => a.Id == artid);
+                    string subj = $"博客id为{artid}标题为【{ace.Title}】文章有新评论！";
+                    string bodys = $"评论人-【{name}】,内容-【{comtext}】";
+                    MailHelper.SendMail("smtp.qq.com", true, "569973364@qq.com", "fzzpynmhekknbegi", "xb68.cn", "569973364@qq.com", "569973364@qq.com", subj, bodys);
+
                     return Json(new BoolResult { Result = true });
                 }
                 return Json(new BoolResult { Result = false,Msg="一篇文章3分钟内只能留言一次哦！" });
